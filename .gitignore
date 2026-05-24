@@ -1,0 +1,37 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias / build
+node_modules/
+dist/
+.cache/
+
+# Dados locais da compradora — NUNCA versionar (LGPD / sigilo profissional)
+# (gerados no setup, na maquina de quem instala o produto)
+config
+config.env
+*.config.yaml
+voz.md
+equipe.md
+quadro.md
+compliance.local.md
+memory/
+**/dados-locais/
+
+# Config da compradora — dados do escritorio, nunca versionar
+skills/whatsapp/config.env
+skills/whatsapp/config.json
+skills/whatsapp/voz.md
+skills/whatsapp/compliance.local.md
+skills/whatsapp/memory/
+
+# Artefatos temporarios
+/tmp/
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+skills/whatsapp/scripts/__pycache__/

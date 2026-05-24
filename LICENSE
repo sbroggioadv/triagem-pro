@@ -1,0 +1,52 @@
+Triagem Pro — License
+
+Copyright (c) 2026 Triagem Pro. All rights reserved.
+
+This software and its accompanying documentation (the "Software") are
+distributed for use by licensed legal practitioners and their authorized
+staff.
+
+PERMITTED USE
+-------------
+
+Subject to the terms below, the Software may be installed and used by
+the end user (the "Licensee") on a single law practice's infrastructure
+for the purpose of triaging WhatsApp communications and drafting
+responses with attorney supervision.
+
+CONDITIONS
+----------
+
+1. The Licensee acknowledges that the Software performs reads and writes
+   on WhatsApp data on the Licensee's own device. No data is transmitted
+   to the licensor's servers.
+
+2. The OAB compliance module (`compliance.md`) is provided as a default
+   safeguard. The Licensee is responsible for adapting it (via
+   `compliance.local.md`) to the regulations of their OAB section and
+   their professional judgment. The licensor is not responsible for
+   ethical, civil, or disciplinary consequences arising from messages
+   sent through the Software.
+
+3. The Software does not send any message without the Licensee's
+   explicit approval. The architecture enforces this constraint.
+
+PROHIBITIONS
+------------
+
+- Redistribution, sublicensing, or resale of the Software is prohibited
+  without prior written authorization from the licensor.
+- Reverse engineering of any closed-source component (if applicable) is
+  prohibited.
+
+DISCLAIMER
+----------
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For commercial licensing terms or to obtain authorization for
+redistribution, contact the licensor.

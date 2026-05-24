@@ -1,0 +1,7 @@
+{
+  "name": "triagem-pro",
+  "version": "0.1.0",
+  "description": "Triagem Pro - agente de triagem de WhatsApp para escritorios de advocacia. Le o WhatsApp via API Zappfy, classifica conversas por urgencia, redige respostas no estilo da advogada (com guardrail OAB) e mantem quadro vivo de pendencias. Instalacao conversacional 100% pelo chat.",
+  "author": { "name": "Triagem Pro" },
+  "license": "UNLICENSED"
+}

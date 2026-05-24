@@ -1,0 +1,31 @@
+{
+  "firm": {
+    "name": "Nome do seu escritorio",
+    "owner_contact_names": ["Como voce aparece no WhatsApp da equipe"]
+  },
+  "team": [
+    {
+      "display": "Dra. Fulana de Tal",
+      "area": "Trabalhista",
+      "names": ["fulana", "dra fulana", "dra. fulana de tal"]
+    },
+    {
+      "display": "Dr. Beltrano",
+      "area": "Civel",
+      "names": ["beltrano", "dr beltrano"]
+    }
+  ],
+  "internal_groups": ["NOME DO GRUPO INTERNO 1", "NOME DO GRUPO INTERNO 2"],
+  "client_group_prefixes": ["Adv -"],
+  "triagem": {
+    "thresholds": { "atrasada_hours": 24, "importante_hours": 4, "normal_hours": 1 },
+    "max_chats": 100,
+    "max_process": 30
+  },
+  "urgent_keywords": [
+    "urgente", "audiencia", "audiência", "intimacao", "intimação",
+    "prazo", "liminar", "penhora", "sentenca", "sentença",
+    "pericia", "perícia", "bloqueio"
+  ],
+  "silence_keywords": ["jusbrasil", "asaas", "fireflies", "pagbank"]
+}

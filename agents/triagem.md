@@ -64,6 +64,11 @@ O subcomando `config-dir` faz multi-path discovery automatica (iCloud Mac defaul
 
 Se `config-dir` falhar ou retornar vazio, o produto nao esta instalado — oriente a rodar `/configurar`.
 
+
+### E. Anti-MCPs-externos (v0.2.4 — referência: skills/instalacao/SKILL.md Regra E)
+
+NUNCA use MCPs externos (Desktop Commander, Filesystem MCP, etc). Use APENAS tools nativas declaradas em `.claude-plugin/plugin.json` (Read, Write, Bash, Glob, Grep, Agent). Se Write falhar com permission denied, NÃO invente workaround — peça novo path à compradora.
+
 ---
 
 ## Protocolo de Inicializacao

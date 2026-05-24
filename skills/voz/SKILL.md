@@ -28,6 +28,37 @@ Esse subcomando faz multi-path discovery automatica e retorna o path absoluto. D
 
 `"$CONFIG_DIR/config.env`" e `"$CONFIG_DIR/config.json`" devem existir e ter `firm.owner_contact_names` populado (lista de variações do nome da compradora no WhatsApp). Se ausentes, oriente a rodar `/configurar` antes.
 
+
+## ⚠ Filtro 2 — Anonimização AUTOMÁTICA durante a coleta (v0.2.4)
+
+**APLICAR DURANTE PASSO 1 (coleta), antes de filtrar `from_me=true`.** NÃO espere pra perguntar à compradora "quer excluir família?" depois — é tarde demais.
+
+### Gatilhos de EXCLUSÃO AUTOMÁTICA (sem perguntar)
+
+Mensagem é DESCARTADA da amostra (não vira exemplo, não vira estatística) se contiver:
+
+1. **Família próxima** — palavras como "minha esposa", "meu marido", "minha mãe", "meu pai", "minha filha", "meu filho", "minha irmã", "meu irmão", "minha sogra", "meu sogro", "meu(minha) genro/nora", "meu primo", "minha tia/tio" + nomes próprios precedidos desses pronomes
+2. **Saúde/luto** — "câncer", "internado", "faleceu", "morreu", "luto", "doença", "diagnóstico", "tratamento", "hospital", "UTI", "óbito", "velório"
+3. **Finanças pessoais (não comerciais)** — "salário", "dívida", "empréstimo pessoal", "fatura cartão", "minha conta bancária", "nubank meu"
+4. **Conflitos privados** — "briga", "discussão", "separação", "divórcio", "separamos"
+5. **Saúde mental** — "depressão", "ansiedade", "terapia", "psicólogo", "psiquiatra"
+
+### O que fazer com mensagens excluídas
+
+- NÃO entra na contagem de "mensagens analisadas"
+- NÃO vira exemplo bruto no `voz.md`
+- NÃO influencia análise de tom/vocabulário
+- Reporte ao final: "Excluí N mensagens da amostra por trazerem conteúdo pessoal íntimo (família, saúde, finanças pessoais). Análise feita com M mensagens profissionais."
+
+### Pergunta tardia PROIBIDA
+
+❌ NUNCA diga: "As mensagens de família entraram na amostra — quer que eu exclua?"
+✅ SEMPRE diga: "Excluí automaticamente N mensagens com conteúdo pessoal — análise feita com M mensagens profissionais."
+
+A advogada compradora NÃO PRECISA escolher se quer privacidade — privacidade é default.
+
+---
+
 ## Passo 1 — Puxar amostra de mensagens
 
 Você precisa coletar mensagens onde a compradora **enviou** algo (campo `from_me=true` no JSON da API Zappfy — o CLI `whatsapp.py` já expõe esse campo no output `--json messages`). A API não filtra `fromMe` nativamente — você puxa as mensagens recentes de cada chat e filtra localmente.

@@ -54,6 +54,11 @@ export CONFIG_DIR="$(python3 skills/whatsapp/scripts/whatsapp.py config-dir)"
 
 Esse subcomando faz multi-path discovery automatica e retorna o path absoluto. Depois disso todos os `"$CONFIG_DIR/X"` resolvem corretamente. Normalmente o agente `triagem` ja exportou antes de invocar voce — mas a redundancia nao machuca.
 
+
+### E. Anti-MCPs-externos (v0.2.4 — referência: skills/instalacao/SKILL.md Regra E)
+
+NUNCA use MCPs externos (Desktop Commander, Filesystem MCP, etc). Use APENAS tools nativas declaradas em `.claude-plugin/plugin.json` (Read, Write, Bash, Glob, Grep, Agent). Se Write falhar com permission denied, NÃO invente workaround — peça novo path à compradora.
+
 ---
 
 ## 0. Carga inicial (SEMPRE no início de cada invocação)

@@ -17,7 +17,7 @@ A compradora **não escreve nada manualmente**. Você puxa, analisa, escreve. El
 
 ## Passo 1 — Puxar amostra de mensagens
 
-Você precisa coletar mensagens onde a compradora **enviou** algo (campo `fromMe=true` no JSON da API Zappfy — o CLI `whatsapp.py` já expõe esse campo no output `--json messages`). A API não filtra `fromMe` nativamente — você puxa as mensagens recentes de cada chat e filtra localmente.
+Você precisa coletar mensagens onde a compradora **enviou** algo (campo `from_me=true` no JSON da API Zappfy — o CLI `whatsapp.py` já expõe esse campo no output `--json messages`). A API não filtra `fromMe` nativamente — você puxa as mensagens recentes de cada chat e filtra localmente.
 
 **Passo 1.1 — Listar conversas recentes (não mensagens ainda):**
 
@@ -45,7 +45,7 @@ Acumule todas as mensagens em `/tmp/voz_messages.json`.
 
 **Passo 1.4 — Filtrar para mensagens enviadas pela compradora:**
 
-Filtre apenas itens onde `fromMe == true` no JSON. Descarte:
+Filtre apenas itens onde `from_me == true` no JSON. **Atenção:** o campo é `from_me` (snake_case), NÃO `fromMe` (camelCase) — esse é o nome que a API Zappfy retorna. Descarte:
 - mensagens vazias,
 - mensagens apenas-mídia (sem texto),
 - mensagens apenas-link (só URL, sem prosa),
@@ -55,7 +55,7 @@ Filtre apenas itens onde `fromMe == true` no JSON. Descarte:
 
 ## Passo 2 — Validar amostra mínima
 
-| Quantidade de mensagens fromMe encontradas | O que fazer |
+| Quantidade de mensagens from_me encontradas | O que fazer |
 |---|---|
 | ≥ 30 | Amostra OK, prosseguir. |
 | 10–29 | Amostra pequena. Avisar a compradora: "Achei só N mensagens suas — o `voz.md` vai ficar com base reduzida. Funciona, mas fica menos preciso." Prosseguir mesmo assim. |
@@ -147,7 +147,7 @@ Gravar em `skills/whatsapp/voz.md` (esta pasta está no `.gitignore`). Estrutura
 
 ## Exemplos brutos (amostra usada)
 
-[5 mensagens reais dela, anonimizadas se conter dado sensível — substituir nomes de clientes por [CLIENTE], processos por (proc. abreviado), valores por [VALOR]]
+[5 mensagens reais dela, **anonimizadas obrigatoriamente** seguindo os 2 filtros das "Notas de segurança" desta skill. Trechos com luto, família, saúde, finanças pessoais ou conflitos privados devem ser OMITIDOS — substitua por outro exemplo seguro. Em caso de dúvida, prefira menos exemplos a vazar conteúdo íntimo.]
 ````
 
 ## Passo 5 — Mostrar resumo e pedir confirmação
@@ -162,8 +162,53 @@ Exibir no chat:
 >
 > Olha o arquivo `skills/whatsapp/voz.md` (eu gravei lá) e me fala se ficou parecido com você. Posso ajustar qualquer trecho."
 
-## Notas de segurança
+## Notas de segurança (LEIA ANTES DE GRAVAR)
 
 - `voz.md` contém **trechos reais** de mensagens da compradora. Está coberto pelo `.gitignore`.
-- Trechos com dado sensível (CPF, número de processo completo, valor exato) devem ser anonimizados antes de gravar. Use placeholders `[CLIENTE]`, `(proc. ...últimos-4)`, `[VALOR]`.
-- A skill **nunca envia mensagem** e **nunca escreve** em arquivos além de `skills/whatsapp/voz.md`. (A garantia técnica vem do agente que carrega esta skill — esta nota é o contrato.)
+
+### Anonimização obrigatória antes de gravar
+
+Antes de escrever qualquer trecho real na seção "Exemplos brutos", aplique os 2 filtros abaixo. Trecho que dispare qualquer regra deve ser **substituído ou omitido** — nunca passe direto.
+
+**Filtro 1 — Dados técnicos sensíveis (LGPD):**
+
+| Padrão | Substituição |
+|--------|-------------|
+| CPF (`\d{3}\.\d{3}\.\d{3}-\d{2}`) | `[CPF]` |
+| RG | `[RG]` |
+| Número de processo (`\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}`) | `(proc. ...últimos-4)` — manter só os 4 últimos dígitos |
+| CNPJ | `[CNPJ]` |
+| Telefone completo | `[TELEFONE]` |
+| Endereço residencial | `[ENDEREÇO]` |
+| Dados bancários (agência + conta) | `[BANCO]` |
+| Valor exato em R$ | `[VALOR]` |
+| Nome completo de cliente real | `[CLIENTE]` |
+
+**Filtro 2 — Trechos pessoais íntimos (igualmente crítico):**
+
+Detecte e mascare/omita trechos que envolvam:
+
+| Categoria | Gatilhos (não-exaustivos) | Ação |
+|-----------|--------------------------|------|
+| **Família próxima** | nome de filho(a), pai, mãe, irmão(ã), cônjuge, parente; "meu(minha) filho(a)", "esposa", "marido", "meu pai", "minha mãe" | Substituir nome próprio por `[FAMILIAR]` / `[FILHO]` / `[PAI]` / `[MAE]` / `[CONJUGE]` |
+| **Luto / saúde** | falecimento, doença, hospital, tratamento, óbito, "descansa em paz", "tem câncer", "internado" | **Omitir o trecho inteiro.** Não vale a pena pro perfil de voz. |
+| **Finanças pessoais** | salário, dívida pessoal, conta bancária, "tô devendo", "ganhei X" | Substituir por `[FINANCEIRO]` ou omitir |
+| **Conflitos privados** | brigas, separação, processos pessoais, eventos privados | Omitir do exemplo |
+| **Saúde mental** | depressão, ansiedade, terapia | Omitir |
+
+### Regra de ouro
+
+Preserve o **padrão estilístico** (tom, vocabulário, ritmo) **sem** o **conteúdo específico**. Um trecho sobre luto familiar deve virar exemplo de "tom emocional aberto" sem contar a história real. Se você não consegue preservar o estilo sem expor conteúdo íntimo, **omita o exemplo** — 4 exemplos seguros são melhores que 5 com um trecho exposto.
+
+### Onde gravar
+
+- **Localização padrão:** `skills/whatsapp/voz.md` relativo à pasta de instalação do plugin.
+- **Quando o plugin dir é read-only (Cowork e similares):** você NÃO escolhe sozinho onde gravar. Pergunte ao agente host (`instalacao` / `triagem`) que aplica a regra B do bloco "Regras universais" — pedir confirmação explícita à compradora antes de tocar qualquer pasta sync. Nunca grave em iCloud, Dropbox, Drive ou OneDrive sem aprovação da compradora.
+
+### O que a skill NÃO faz
+
+- A skill **nunca envia mensagem**.
+- A skill **nunca escreve** em arquivo além de `voz.md` (no path autorizado pela compradora).
+- A skill **nunca infere** dados pessoais do contexto do host (CLAUDE.md externo, nome do user, etc.) — só usa o que vem das mensagens reais coletadas e do `config.json` do escritório.
+
+(A garantia técnica vem do agente que carrega esta skill — esta nota é o contrato.)

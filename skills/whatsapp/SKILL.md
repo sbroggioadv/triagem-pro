@@ -19,7 +19,7 @@ O comando `unread` usa o contador `wa_unreadCount` da API Zappfy, que tem DOIS p
 
 1. **Device-scoped (desincroniza com o celular):** a Zappfy/uazapi e um dispositivo companheiro do WhatsApp. O contador dela e totalmente independente do contador do celular do usuario. Msgs ja lidas no celular continuam aparecendo como "unread" na Zappfy — historicamente acumulam ate milhares de fantasmas.
 
-2. **Conta as proprias mensagens do usuario como "nao lidas":** quando o usuario envia msgs pelo celular, a Zappfy recebe como evento novo e tambem incrementa o contador — mesmo essa msg sendo `fromMe: true`. Resultado: o comando `unread` devolve conversas onde a ultima mensagem foi ENVIADA pelo proprio usuario, contadas erroneamente como "nao lidas".
+2. **Conta as proprias mensagens do usuario como "nao lidas":** quando o usuario envia msgs pelo celular, a Zappfy recebe como evento novo e tambem incrementa o contador — mesmo essa msg sendo `from_me: true`. Resultado: o comando `unread` devolve conversas onde a ultima mensagem foi ENVIADA pelo proprio usuario, contadas erroneamente como "nao lidas".
 
 ### Comando correto: `triagem`
 
@@ -31,7 +31,7 @@ Parametro `24` = janela em horas. Use `6` pra urgencias, `48` pra panorama amplo
 
 O `triagem` resolve os 2 problemas acima:
 
-- **Filtra `fromMe: true`** — msgs do proprio usuario vao pra categoria `items_respondidos` (nao pra pendencias)
+- **Filtra `from_me: true`** — msgs do proprio usuario vao pra categoria `items_respondidos` (nao pra pendencias)
 - **Usa gap temporal** (horas sem resposta) em vez do contador sujo
 - **Detecta sender** identificado no grupo (separa equipe interna de cliente)
 - **Palavras-chave de urgencia** disparam URGENTE — configuradas em `config.json` → `urgent_keywords`
@@ -71,7 +71,7 @@ Thresholds e equipe sao configurados em `config.json`. Ver `config.json.example`
 
 - NUNCA rode `unread` pra triagem — use `triagem`
 - NUNCA categorize por "Pessoais / Grupos / Juridico" — use as 6 categorias oficiais do triagem
-- NUNCA liste msgs `fromMe: true` em categorias de pendencia (vao pra `items_respondidos`)
+- NUNCA liste msgs `from_me: true` em categorias de pendencia (vao pra `items_respondidos`)
 - NUNCA liste msgs com sender na equipe interna como pendencia do operador — vao pra `EQUIPE_CUIDANDO`
 - NUNCA apresente numeros sem contexto tipo "50 conversas nao lidas" — o contador e lixo
 - **SEMPRE mostre o campo `last_text`** na apresentacao, pra o operador saber o contexto sem precisar abrir o grupo

@@ -20,10 +20,10 @@ python3 skills/whatsapp/scripts/whatsapp.py --json chats 50
 python3 skills/whatsapp/scripts/whatsapp.py --json messages "<chatid>" 50
 ```
 
-4. Para cada par (mensagem do cliente → resposta do operador `fromMe=true`), calcule o gap em horas.
+4. Para cada par (mensagem do cliente → resposta do operador `from_me=true`), calcule o gap em horas.
 
 5. Considere apenas pares onde:
-   - A mensagem do cliente é seguida por uma resposta `fromMe=true` no mesmo chat.
+   - A mensagem do cliente é seguida por uma resposta `from_me=true` no mesmo chat.
    - Ignorar pares onde o gap > 14 dias (provável conversa pausada, não atraso real).
 
 6. Calcule:

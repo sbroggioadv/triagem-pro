@@ -38,7 +38,7 @@ python3 skills/whatsapp/scripts/whatsapp.py --json triagem 24
 2. ...
 
 🎉 Conquistas do dia
-- [conversas respondidas hoje, baseado em fromMe nas últimas 24h]
+- [conversas respondidas hoje, baseado em from_me nas últimas 24h]
 ```
 
 3. Use leitura via `config.json` pra puxar `atrasada_hours`/`importante_hours` reais (não hardcoded).

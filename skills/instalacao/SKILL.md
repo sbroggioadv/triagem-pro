@@ -20,6 +20,9 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
 ### A. Anti-inferência de identidade e contexto do host
 
 - **NUNCA** infira nome, título (Dra./Dr.), gênero, e-mail, nome do escritório, área de atuação, paths de arquivo, skills disponíveis, provedores, equipe, clientes ou QUALQUER dado pessoal/profissional do contexto do host (variáveis de ambiente, CLAUDE.md de outro projeto, nome de usuário do Cowork, sidebar, arquivos pré-existentes na pasta sync, etc.).
+- **NUNCA leia, abra, ou referencie** os seguintes arquivos durante o wizard, mesmo que pareçam "atalhos óbvios" pra economizar perguntas: `CLAUDE.md` (de QUALQUER pasta — workspace do Cowork, projeto do Code, home, iCloud, etc.), `MEMORY.md`, `.cursor/context/*`, `.cursor/rules/*`, `personal-info.md`, qualquer dotfile pessoal, qualquer `package.json` ou `pyproject.toml`. O wizard **NUNCA usa esses arquivos como source-of-truth pra preencher `firm.name`, `firm.owner_contact_names`, `team`, `internal_groups`, `client_group_prefixes` ou qualquer outro campo do `config.json`**.
+- **Por quê:** o agente do plugin é instalado em workspaces de centenas de advogadas. Cada uma tem `CLAUDE.md` diferente — uma tem dados do escritório dela, outra tem dados de outro cliente, outra não tem nada. Se você pré-preencher do `CLAUDE.md` automaticamente, vai pré-preencher COISA ERRADA pra maioria das compradoras (que não são o Doc / não são o Sbroggio). O fluxo correto é **sempre perguntar** — mesmo que pareça tedioso pra compradora que já tem CLAUDE.md rico. Ela pode colar dados em bloco se quiser ir rápido, mas a iniciativa de informar é DELA, nunca sua.
+- **Comportamento esperado:** quando você acabou de instalar e a compradora rodou `/configurar`, comece SEMPRE com **"Antes de começar, preciso saber onde gravar..."** (Etapa Preliminar). Depois prossiga pra Rotina de Retomada (verifica config existente). Depois Etapa 0 (Python). Depois Etapa 1 (Zappfy). Depois Etapa 2 (Escritório) — onde você FAZ AS PERGUNTAS abertas, **sem pré-preencher nada do CLAUDE.md**.
 - TUDO sobre a compradora vem de:
   1. `config.json` carregado da pasta de configuração (após o wizard).
   2. Pergunta direta à compradora no chat.
@@ -62,30 +65,51 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
 
 O diretório do plugin é **read-only** no Cowork (e no Code também, quando o plugin é instalado via marketplace). Por isso, antes de qualquer diagnóstico, **pergunte UMA vez à compradora onde ela quer que os arquivos de configuração (`config.env`, `config.json`, `voz.md`) sejam gravados**.
 
-### Como perguntar (apresentar AS OPÇÕES já prontas, não inventar nada)
+### Limitação técnica importante (entenda antes de apresentar as opções)
 
-Apresente exatamente este texto (adaptando "Mac" pra "Windows" se detectar Windows):
+O **seu sandbox bash no Cowork tem acesso restrito**. Você consegue ler/escrever direto em:
+- ✅ Pasta de plugin instalado (read-only, não serve pra gravar config)
+- ✅ **Pasta iCloud Drive** (`~/Library/Mobile Documents/com~apple~CloudDocs/`) — App File Provider expõe pro sandbox
+- ❌ `~/Documents/`, `~/Desktop/`, `~/` (home root) — **NÃO acessíveis** ao sandbox sem ponte via Terminal
+- ❌ Outras pastas de sync (Dropbox, Drive, OneDrive) — depende; geralmente **NÃO acessíveis**
 
-> "Antes de começar a configuração, preciso saber onde gravar seus arquivos.
+Isso significa: **a única forma de gravar SEM PEDIR Terminal pra compradora é gravar em pasta iCloud**. Qualquer outra opção exige que ela abra Terminal e cole 1 comando bash (que você pode preparar pronto). Apresente isso de forma transparente.
+
+### Como perguntar (sem default — compradora escolhe consciente)
+
+Apresente exatamente este texto:
+
+> "Antes de começar a configuração, preciso saber onde você quer que eu grave os seus arquivos (token Zappfy, dados do escritório, perfil de voz). Tem 3 opções — escolha a que faz mais sentido pra você:
 >
-> O plugin é read-only, então preciso escrever em uma pasta sua. Recomendo:
+> ---
 >
-> **Opção A (recomendada) — Pasta Documentos:**
-> - Mac: `~/Documents/triagem-pro/`
-> - Windows: `C:\Users\<seu-usuario>\Documents\triagem-pro\`
+> **Opção 1 — iCloud Drive (`Cowork OS/triagem-pro/`)**
+> - ✅ **Setup 100% no chat** — eu gravo tudo aqui mesmo, sem você abrir nenhum programa.
+> - ⚠️ Seus arquivos vão **sincronizar nos seus dispositivos Apple** (Mac, iPhone, iPad logados na sua conta iCloud) **+ backup automático na nuvem iCloud**.
+> - ⚠️ O token Zappfy e dados do escritório ficam replicados na sua conta iCloud.
+> - **Boa pra:** advogada que tem só um Mac (ou Mac + iPhone) na conta iCloud dela e confia no sync da Apple.
 >
-> Essa pasta NÃO sincroniza com nuvem por padrão, então seus dados ficam só na sua máquina.
+> **Opção 2 — Pasta local fora de sync (`~/Documents/triagem-pro/` ou similar)**
+> - ✅ **Privacidade máxima** — fica só na sua máquina, não vai pra cloud nenhuma.
+> - ⚠️ **Vai precisar abrir o Terminal UMA vez no início** — eu preparo o comando exato, você só cola e dá Enter (~30 segundos). Nas etapas seguintes não precisa mais.
+> - **Boa pra:** escritório com sócios diferentes, ambientes restritos, ou quem quer dados estritamente contidos nesta máquina.
 >
-> **Opção B — Pasta de sua escolha:**
-> Cole aqui o caminho completo onde quer gravar (ex.: `~/Dropbox/triagem-pro/` se quiser sync entre dispositivos — **lembre que sync = backup na nuvem do provedor**).
+> **Opção 3 — Pasta sua escolha (path customizado)**
+> - Cola aqui o caminho completo (ex.: `~/Dropbox/triagem-pro/`, `~/Library/CloudStorage/GoogleDrive/triagem-pro/`).
+> - ⚠️ Pode ou não precisar de Terminal — depende se essa pasta é acessível pelo meu sandbox. Vou tentar gravar; se falhar, te dou o comando bash pronto.
 >
-> Qual prefere? Responda 'A' (uso Documents) ou cole o caminho da Opção B."
+> ---
+>
+> **Sua escolha?** Responda **'1'** (iCloud), **'2'** (Documents local) ou **cole o caminho** (Opção 3).
+>
+> Importante: NÃO há resposta certa universal — depende da realidade do seu escritório, sua tolerância a sync, e se você se sente confortável abrindo o Terminal uma vez. Tome a decisão que faz sentido pra você."
 
 ### Aguarde resposta literal
 
-- Se responder **"A"**: use o path padrão do SO da compradora.
-- Se colar **path**: use o path colado literalmente (expanda `~` pra `$HOME`).
-- Se responder **vago** ("tanto faz", "pode salvar", etc): re-pergunte com as opções claras.
+- Se responder **"1"**: use `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/triagem-pro/`. Crie a pasta se não existir. **Não precisa Terminal — você grava direto.**
+- Se responder **"2"**: use `$HOME/Documents/triagem-pro/`. Prepare comandos bash pra compradora colar no Terminal (mkdir + cp dos templates + chmod). **Avise que serão 30 segundos no Terminal.**
+- Se colar **path**: use literal (expanda `~`). Tente gravar direto via sandbox. Se falhar, fallback pra Terminal igual Opção 2.
+- Se responder **vago** ("tanto faz", "pode salvar", "qualquer uma"): **re-pergunte com as opções claras.** Não decida sozinho.
 
 ### O que NÃO fazer aqui
 

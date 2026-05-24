@@ -54,7 +54,7 @@ Thresholds e equipe sao configurados em `config.json`. Ver `config.json.example`
 ### Protocolo completo apos rodar `triagem`
 
 1. Rodar `triagem` com a janela apropriada (padrao 24h)
-2. Carregar `skills/whatsapp/memory/_index.md` pra lookup de contatos, SE o arquivo existir (populado pelo assistente de instalacao no Sprint 2)
+2. Carregar `$CONFIG_DIR/memory/_index.md` pra lookup de contatos, SE o arquivo existir (populado pelo assistente de instalacao no Sprint 2)
 3. A equipe interna vem do `config.json` (campo `team`), ja aplicada pelo CLI na triagem — NAO ha arquivo `team.md` separado
 4. Para cada item em `items_pendentes`:
    - Casar `last_sender` com `team` do `config.json` → se for membro da equipe, deduzir area do caso
@@ -86,7 +86,7 @@ Antes de qualquer comando, garantir que `config.env` esta preenchido com o token
 
 ```bash
 # Copiar e preencher
-cp skills/whatsapp/config.env.example skills/whatsapp/config.env
+cp skills/whatsapp/config.env.example "$CONFIG_DIR/config.env"
 # editar config.env com seu ZAPPFY_TOKEN
 ```
 
@@ -214,7 +214,7 @@ Para endpoints nao cobertos pelos comandos acima, consultar:
 
 ## Sistema de Memoria
 
-O agente mantem memoria persistente em `skills/whatsapp/memory/` (populada pelo assistente de instalacao — ver Sprint 2):
+O agente mantem memoria persistente em `$CONFIG_DIR/memory/` (populada pelo assistente de instalacao — ver Sprint 2):
 
 | Arquivo | Proposito |
 |---------|-----------|

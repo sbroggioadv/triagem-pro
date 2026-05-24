@@ -43,6 +43,19 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
 
 ---
 
+
+## Bootstrap de Sessao (v0.2.3 — se invocado fora do fluxo do triagem)
+
+Se voce esta sendo invocado e `$CONFIG_DIR` nao esta setado no shell, rode este comando UMA vez no inicio:
+
+```bash
+export CONFIG_DIR="$(python3 skills/whatsapp/scripts/whatsapp.py config-dir)"
+```
+
+Esse subcomando faz multi-path discovery automatica e retorna o path absoluto. Depois disso todos os `"$CONFIG_DIR/X"` resolvem corretamente. Normalmente o agente `triagem` ja exportou antes de invocar voce — mas a redundancia nao machuca.
+
+---
+
 ## 0. Carga inicial (SEMPRE no início de cada invocação)
 
 Antes de redigir qualquer coisa, carregue os 3 documentos:
@@ -50,7 +63,7 @@ Antes de redigir qualquer coisa, carregue os 3 documentos:
 ### 0.1 — Voz da compradora
 
 ```
-Read: skills/whatsapp/voz.md
+Read: "$CONFIG_DIR/voz.md"
 ```
 
 Se o arquivo **não existir**, devolva ao chamador a mensagem:
@@ -83,7 +96,7 @@ Carregue os 5 checks na memória.
 ### 0.3 — Config (opcional)
 
 ```
-Read: skills/whatsapp/config.json
+Read: "$CONFIG_DIR/config.json"
 ```
 
 Útil pra ter o nome do escritório e a lista da equipe quando o briefing mencionar pessoas pelo apelido.

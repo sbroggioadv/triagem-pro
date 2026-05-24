@@ -23,12 +23,80 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 # ============================================================
-# CONFIGURACAO
+# CONFIGURACAO — MULTI-PATH DISCOVERY (v0.2.3)
 # ============================================================
+#
+# A v0.2.3 introduziu descoberta automatica de CONFIG_DIR pra resolver
+# o problema do plugin ser read-only no Cowork. A compradora escolhe
+# onde gravar seus arquivos (config.env, config.json, voz.md) via wizard,
+# e este script localiza esse path automaticamente em runtime.
+#
+# Ordem de prioridade (primeiro que tem config.env vence):
+#   1. $TRIAGEM_CONFIG_DIR (env var — override avancado/dev)
+#   2. ~/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/Triagem Pro/  (Mac iCloud — default v0.2.3)
+#   3. ~/OneDrive/Cowork OS/Triagem Pro/  (Windows OneDrive — default v0.2.3)
+#   4. ~/Documents/triagem-pro/  (path da v0.2.x — retrocompat)
+#   5. ~/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/skills/whatsapp/  (path da v0.1.0 — retrocompat)
+#   6. SKILL_DIR  (fallback dev — plugin instalado direto, modo working tree)
+#
+# Se NENHUM path tem config.env, retorna o default v0.2.3 (item 2 ou 3 conforme SO).
+# load_config() vai falhar com mensagem clara orientando rodar /configurar.
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
-CONFIG_FILE = SKILL_DIR / "config.env"
+HOME = Path.home()
+
+
+def _candidate_config_dirs():
+    """Retorna lista ordenada de paths candidatos pro CONFIG_DIR."""
+    candidates = []
+    env_override = os.environ.get("TRIAGEM_CONFIG_DIR", "").strip()
+    if env_override:
+        candidates.append(Path(env_override).expanduser())
+    icloud_root = HOME / "Library" / "Mobile Documents" / "com~apple~CloudDocs"
+    candidates.extend([
+        icloud_root / "Cowork OS" / "Triagem Pro",
+        HOME / "OneDrive" / "Cowork OS" / "Triagem Pro",
+        HOME / "Documents" / "triagem-pro",
+        icloud_root / "Cowork OS" / "skills" / "whatsapp",
+        SKILL_DIR,
+    ])
+    return candidates
+
+
+def discover_config_dir():
+    """Retorna o CONFIG_DIR ativo:
+    1. Se TRIAGEM_CONFIG_DIR env var setada, SEMPRE prevalece (mesmo sem config.env ainda — pra wizard gravar la).
+    2. Senao, retorna primeiro candidato com config.env existente.
+    3. Senao, retorna default v0.2.3 conforme SO (pra wizard gravar la na primeira instalacao).
+    """
+    env_override = os.environ.get("TRIAGEM_CONFIG_DIR", "").strip()
+    if env_override:
+        return Path(env_override).expanduser()
+    for c in _candidate_config_dirs():
+        if (c / "config.env").exists():
+            return c
+    # Nenhum tem config.env — retorna default v0.2.3 conforme SO
+    if sys.platform == "win32":
+        return HOME / "OneDrive" / "Cowork OS" / "Triagem Pro"
+    if sys.platform.startswith("linux"):
+        # Em Linux (raro mas possivel — Cowork sandbox server-side),
+        # iCloud nao existe. Retorna ~/Documents/ que tem maior chance.
+        return HOME / "Documents" / "triagem-pro"
+    return HOME / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "Cowork OS" / "Triagem Pro"
+
+
+def cmd_config_dir():
+    """Subcomando: imprime CONFIG_DIR ativo. Util pra agents e bash:
+        export CONFIG_DIR=$(python3 .../whatsapp.py config-dir)
+    """
+    print(str(CONFIG_DIR))
+
+
+CONFIG_DIR = discover_config_dir()
+CONFIG_FILE = CONFIG_DIR / "config.env"
+CONFIG_JSON_PATH = CONFIG_DIR / "config.json"
+VOZ_PATH = CONFIG_DIR / "voz.md"
 
 JSON_MODE = False
 
@@ -36,6 +104,14 @@ JSON_MODE = False
 def load_config():
     if not CONFIG_FILE.exists():
         print(f"Arquivo de credenciais nao encontrado: {CONFIG_FILE}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Triagem Pro nao esta configurado neste ambiente.", file=sys.stderr)
+        print("Rode /configurar no chat do Claude para configurar.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Paths verificados (em ordem):", file=sys.stderr)
+        for c in _candidate_config_dirs():
+            mark = "OK" if (c / "config.env").exists() else "  "
+            print(f"  [{mark}] {c}", file=sys.stderr)
         sys.exit(1)
     config = {}
     with open(CONFIG_FILE) as f:
@@ -56,6 +132,12 @@ def load_config():
             os.environ.setdefault(key, value)
     return token, base_url
 
+
+# Subcomando especial "config-dir" não precisa de credenciais — retorna sem load_config()
+# para nao falhar quando agente roda no inicio de sessao pra descobrir CONFIG_DIR.
+if len(sys.argv) >= 2 and sys.argv[1] in ("config-dir", "--config-dir"):
+    print(str(CONFIG_DIR))
+    sys.exit(0)
 
 TOKEN, ZAPPFY_BASE_URL = load_config()
 
@@ -85,7 +167,8 @@ def load_firm_config(path=None):
     expostos para consumo direto pelo agente (que le config.json diretamente)
     — nao sao usados pelo CLI, mas nao sao dead code."""
     if path is None:
-        path = os.path.join(SKILL_DIR, "config.json")
+        # v0.2.3: usa CONFIG_DIR descoberto, nao SKILL_DIR hardcoded
+        path = str(CONFIG_JSON_PATH)
     raw = {}
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -133,7 +216,7 @@ def load_firm_config(path=None):
 # a partir de qualquer mensagem onde senderName veio populado. Funciona
 # cross-chat e cross-sessao.
 
-LID_CACHE_PATH = SKILL_DIR / "memory" / "lid_cache.json"
+LID_CACHE_PATH = CONFIG_DIR / "memory" / "lid_cache.json"
 _LID_CACHE = None
 
 
@@ -703,7 +786,7 @@ def cmd_send_media(identifier, media_url, media_type="image", caption=""):
 # COMANDOS: DOWNLOAD / READ MEDIA
 # ============================================================
 
-MEDIA_CACHE_DIR = SKILL_DIR / "cache" / "media"
+MEDIA_CACHE_DIR = CONFIG_DIR / "cache" / "media"
 
 
 def _ensure_cache_dir():
@@ -772,7 +855,7 @@ def cmd_download_media(identifier_or_msgid, msgid=None):
         print(f"  URL:  {info['file_url']}")
 
 
-TRANSCRIPT_CACHE_DIR = SKILL_DIR / "cache" / "transcripts"
+TRANSCRIPT_CACHE_DIR = CONFIG_DIR / "cache" / "transcripts"
 _WHISPER_MODEL = None
 
 
@@ -2137,6 +2220,8 @@ Flag --json no inicio ativa output estruturado para agentes AI.""")
 
 
 COMMANDS = {
+    # Bootstrap (sem credenciais)
+    "config-dir": (cmd_config_dir, 0, 0),
     # Status
     "status": (cmd_status, 0, 0),
     "presence": (cmd_presence, 1, 1),

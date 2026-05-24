@@ -50,23 +50,39 @@ Voce opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). E
 
 ---
 
+
+## Bootstrap de Sessao (v0.2.3 — executar SEMPRE no inicio)
+
+Antes de qualquer bash com `$CONFIG_DIR`, descubra o path real do CONFIG_DIR e exporte como variavel de ambiente do shell:
+
+```bash
+export CONFIG_DIR="$(python3 skills/whatsapp/scripts/whatsapp.py config-dir)"
+echo "CONFIG_DIR=$CONFIG_DIR"
+```
+
+O subcomando `config-dir` faz multi-path discovery automatica (iCloud Mac default, OneDrive Windows default, ou TRIAGEM_CONFIG_DIR env var se setada) e imprime o path absoluto. Esse export precisa rodar UMA vez por sessao — depois todos os comandos bash com `"$CONFIG_DIR/X"` resolvem corretamente.
+
+Se `config-dir` falhar ou retornar vazio, o produto nao esta instalado — oriente a rodar `/configurar`.
+
+---
+
 ## Protocolo de Inicializacao
 
 ANTES de qualquer acao, SEMPRE execute estes passos:
 
 ### Passo 0 — Verificar configuracao
 
-Antes de triar, verifique se `skills/whatsapp/config.env` e `skills/whatsapp/config.json` existem e sao validos:
+Antes de triar, verifique se `"$CONFIG_DIR/config.env`" e `"$CONFIG_DIR/config.json`" existem e sao validos:
 
 ```bash
-ls skills/whatsapp/config.env 2>/dev/null && echo "ENV_OK" || echo "ENV_AUSENTE"
-ls skills/whatsapp/config.json 2>/dev/null && echo "JSON_EXISTE" || echo "JSON_AUSENTE"
+ls "$CONFIG_DIR/config.env" 2>/dev/null && echo "ENV_OK" || echo "ENV_AUSENTE"
+ls "$CONFIG_DIR/config.json" 2>/dev/null && echo "JSON_EXISTE" || echo "JSON_AUSENTE"
 ```
 
 Se ambos existirem, valide que o `config.json` e valido e tem conteudo minimo:
 
 ```bash
-python3 -c "import json; d=json.load(open('skills/whatsapp/config.json')); assert d.get('firm',{}).get('name')" 2>/dev/null && echo "JSON_VALIDO" || echo "JSON_INVALIDO"
+python3 -c "import json; d=json.load(open('$CONFIG_DIR/config.json')); assert d.get('firm',{}).get('name')" 2>/dev/null && echo "JSON_VALIDO" || echo "JSON_INVALIDO"
 ```
 
 | Situacao | O que fazer |
@@ -86,15 +102,15 @@ cat skills/whatsapp/SKILL.md
 **SEMPRE ler primeiro (se existir):**
 
 ```bash
-cat skills/whatsapp/memory/_index.md
-cat skills/whatsapp/memory/_pending.md
+cat "$CONFIG_DIR/memory/_index.md"
+cat "$CONFIG_DIR/memory/_pending.md"
 ```
 
 **Se a acao envolve um contato/grupo especifico:**
 
 ```bash
-cat skills/whatsapp/memory/contacts/<numero>.md    # se existir
-cat skills/whatsapp/memory/groups/<groupid>.md      # se existir
+cat "$CONFIG_DIR/memory/contacts/"<numero>.md    # se existir
+cat "$CONFIG_DIR/memory/groups/"<groupid>.md      # se existir
 ```
 
 > Nota: a memoria e populada pelo assistente de instalacao (Sprint 2). Se os arquivos nao existirem, prosseguir sem eles.
@@ -158,16 +174,16 @@ Quando o operador pedir "quem e fulano", "contexto do cliente X", "ficha do clie
 
 ```bash
 # Lookup global
-cat skills/whatsapp/memory/_index.md | grep -i "<nome|empresa>"
+cat "$CONFIG_DIR/memory/_index.md" | grep -i "<nome|empresa>"
 
 # Card do cliente
-cat skills/whatsapp/memory/clients/<slug>.md
+cat "$CONFIG_DIR/memory/clients/"<slug>.md
 
 # Grupos associados
-cat skills/whatsapp/memory/groups/<groupid>.md
+cat "$CONFIG_DIR/memory/groups/"<groupid>.md
 
 # Pendencias relacionadas
-grep -A 3 "<nome|empresa>" skills/whatsapp/memory/_pending.md
+grep -A 3 "<nome|empresa>" "$CONFIG_DIR/memory/_pending.md"
 ```
 
 ### Passo 2: Buscar mensagens recentes (opcional, se operador pediu historico)
@@ -396,7 +412,7 @@ Gatilhos no que o operador disser:
 ### Como invocar — preparar o briefing
 
 Antes de invocar, monte o briefing **estruturado** lendo:
-1. `skills/whatsapp/memory/contacts/<numero>.md` ou `memory/groups/<groupid>.md` se existir, pra extrair Categoria e histórico.
+1. `"$CONFIG_DIR/memory/contacts/<numero>.md"` ou `"$CONFIG_DIR/memory/groups/<groupid>.md"` se existir, pra extrair Categoria e histórico.
 2. Mensagens recentes do chat (via `python3 skills/whatsapp/scripts/whatsapp.py --json messages "<chat>" 15`) pra contexto.
 
 #### Mapeamento de categorias (Classificação → Briefing)

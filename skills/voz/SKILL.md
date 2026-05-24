@@ -11,9 +11,22 @@ A compradora **não escreve nada manualmente**. Você puxa, analisa, escreve. El
 
 **Pacing:** trabalhe em modo silencioso. Não pergunte nada à compradora durante os Passos 1, 3 e 4 — só fale com ela no Passo 2 (se a amostra for pequena demais e exigir decisão) e no Passo 5 (para apresentar o resumo e pedir confirmação). Confirme antes de avançar de Passo 2 para os demais, e antes de fechar o Passo 5.
 
+
+## Bootstrap de Sessao (v0.2.3 — se invocado fora do fluxo do triagem)
+
+Se voce esta sendo invocado e `$CONFIG_DIR` nao esta setado no shell, rode este comando UMA vez no inicio:
+
+```bash
+export CONFIG_DIR="$(python3 skills/whatsapp/scripts/whatsapp.py config-dir)"
+```
+
+Esse subcomando faz multi-path discovery automatica e retorna o path absoluto. Depois disso todos os `"$CONFIG_DIR/X"` resolvem corretamente. Normalmente o agente `triagem` ja exportou antes de invocar voce — mas a redundancia nao machuca.
+
+---
+
 ## Pré-condição
 
-`skills/whatsapp/config.env` e `skills/whatsapp/config.json` devem existir e ter `firm.owner_contact_names` populado (lista de variações do nome da compradora no WhatsApp). Se ausentes, oriente a rodar `/configurar` antes.
+`"$CONFIG_DIR/config.env`" e `"$CONFIG_DIR/config.json`" devem existir e ter `firm.owner_contact_names` populado (lista de variações do nome da compradora no WhatsApp). Se ausentes, oriente a rodar `/configurar` antes.
 
 ## Passo 1 — Puxar amostra de mensagens
 
@@ -83,7 +96,7 @@ Examine o conjunto e identifique:
 
 ## Passo 4 — Escrever `voz.md`
 
-Gravar em `skills/whatsapp/voz.md` (esta pasta está no `.gitignore`). Estrutura:
+Gravar em `"$CONFIG_DIR/voz.md`" (esta pasta está no `.gitignore`). Estrutura:
 
 ````markdown
 # Voz — Perfil de escrita da [nome do escritório]
@@ -160,7 +173,7 @@ Exibir no chat:
 > - Seu tom predominante é [X]
 > - Você costuma assinar [Y]
 >
-> Olha o arquivo `skills/whatsapp/voz.md` (eu gravei lá) e me fala se ficou parecido com você. Posso ajustar qualquer trecho."
+> Olha o arquivo `"$CONFIG_DIR/voz.md`" (eu gravei lá) e me fala se ficou parecido com você. Posso ajustar qualquer trecho."
 
 ## Notas de segurança (LEIA ANTES DE GRAVAR)
 
@@ -202,7 +215,7 @@ Preserve o **padrão estilístico** (tom, vocabulário, ritmo) **sem** o **conte
 
 ### Onde gravar
 
-- **Localização padrão:** `skills/whatsapp/voz.md` relativo à pasta de instalação do plugin.
+- **Localização padrão:** `"$CONFIG_DIR/voz.md`" relativo à pasta de instalação do plugin.
 - **Quando o plugin dir é read-only (Cowork e similares):** você NÃO escolhe sozinho onde gravar. Pergunte ao agente host (`instalacao` / `triagem`) que aplica a regra B do bloco "Regras universais" — pedir confirmação explícita à compradora antes de tocar qualquer pasta sync. Nunca grave em iCloud, Dropbox, Drive ou OneDrive sem aprovação da compradora.
 
 ### O que a skill NÃO faz

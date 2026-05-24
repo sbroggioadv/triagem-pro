@@ -63,63 +63,82 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
 
 ## ⚙️ Etapa Preliminar — Onde gravar a configuração (FAÇA ANTES da Rotina de Retomada)
 
-O diretório do plugin é **read-only** no Cowork (e no Code também, quando o plugin é instalado via marketplace). Por isso, antes de qualquer diagnóstico, **pergunte UMA vez à compradora onde ela quer que os arquivos de configuração (`config.env`, `config.json`, `voz.md`) sejam gravados**.
+O diretório do plugin é **read-only** no Cowork (e no Code também, quando o plugin é instalado via marketplace). Você precisa gravar os arquivos da compradora (`config.env`, `config.json`, `voz.md`) numa pasta DELA.
 
-### Limitação técnica importante (entenda antes de apresentar as opções)
+### Limitação técnica do sandbox (entenda mas NÃO conte pra ela)
 
-O **seu sandbox bash no Cowork tem acesso restrito**. Você consegue ler/escrever direto em:
-- ✅ Pasta de plugin instalado (read-only, não serve pra gravar config)
-- ✅ **Pasta iCloud Drive** (`~/Library/Mobile Documents/com~apple~CloudDocs/`) — App File Provider expõe pro sandbox
-- ❌ `~/Documents/`, `~/Desktop/`, `~/` (home root) — **NÃO acessíveis** ao sandbox sem ponte via Terminal
-- ❌ Outras pastas de sync (Dropbox, Drive, OneDrive) — depende; geralmente **NÃO acessíveis**
+O seu sandbox bash no Cowork acessa direto:
+- ✅ Pasta de plugin instalado (read-only, não serve)
+- ✅ **Pasta iCloud Drive** (`~/Library/Mobile Documents/com~apple~CloudDocs/`) — Apple File Provider expõe
+- ✅ Pasta **OneDrive** (Windows: `%USERPROFILE%\OneDrive\`)
+- ❌ `~/Documents/`, `~/Desktop/`, `~/` (home root) — NÃO acessíveis sem ponte Terminal
+- ❌ Dropbox, Google Drive — geralmente NÃO acessíveis
 
-Isso significa: **a única forma de gravar SEM PEDIR Terminal pra compradora é gravar em pasta iCloud**. Qualquer outra opção exige que ela abra Terminal e cole 1 comando bash (que você pode preparar pronto). Apresente isso de forma transparente.
+Por isso, a pasta SUGERIDA precisa ser iCloud (Mac) ou OneDrive (Windows) — ambas são onde o Cowork dela já está habilitado a escrever sem precisar de Terminal.
 
-### Como perguntar (sem default — compradora escolhe consciente)
+### Como perguntar (com sugestão inteligente baseada no SO)
 
-Apresente exatamente este texto:
+Detecte o SO primeiro:
+```bash
+uname -s   # "Darwin" no Mac, "Linux" se WSL, "MINGW*"/"CYGWIN*"/"MSYS*" no Windows bash
+```
 
-> "Antes de começar a configuração, preciso saber onde você quer que eu grave os seus arquivos (token Zappfy, dados do escritório, perfil de voz). Tem 3 opções — escolha a que faz mais sentido pra você:
+Depois apresente:
+
+**No Mac (Darwin):**
+
+> "Antes de começar, preciso saber onde você quer que eu grave os seus arquivos de configuração (token Zappfy, dados do escritório, perfil de voz).
 >
-> ---
+> Pra não precisar abrir nenhum programa, sugiro usar a pasta do iCloud que o Cowork já está habilitado a acessar:
 >
-> **Opção 1 — iCloud Drive (`Cowork OS/triagem-pro/`)**
-> - ✅ **Setup 100% no chat** — eu gravo tudo aqui mesmo, sem você abrir nenhum programa.
-> - ⚠️ Seus arquivos vão **sincronizar nos seus dispositivos Apple** (Mac, iPhone, iPad logados na sua conta iCloud) **+ backup automático na nuvem iCloud**.
-> - ⚠️ O token Zappfy e dados do escritório ficam replicados na sua conta iCloud.
-> - **Boa pra:** advogada que tem só um Mac (ou Mac + iPhone) na conta iCloud dela e confia no sync da Apple.
+> 📁 **`~/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/Triagem Pro/`**
 >
-> **Opção 2 — Pasta local fora de sync (`~/Documents/triagem-pro/` ou similar)**
-> - ✅ **Privacidade máxima** — fica só na sua máquina, não vai pra cloud nenhuma.
-> - ⚠️ **Vai precisar abrir o Terminal UMA vez no início** — eu preparo o comando exato, você só cola e dá Enter (~30 segundos). Nas etapas seguintes não precisa mais.
-> - **Boa pra:** escritório com sócios diferentes, ambientes restritos, ou quem quer dados estritamente contidos nesta máquina.
+> Os arquivos vão sincronizar na sua conta iCloud — disponíveis em qualquer Mac/iPhone/iPad logado nessa conta. Token Zappfy fica no backup iCloud também.
 >
-> **Opção 3 — Pasta sua escolha (path customizado)**
-> - Cola aqui o caminho completo (ex.: `~/Dropbox/triagem-pro/`, `~/Library/CloudStorage/GoogleDrive/triagem-pro/`).
-> - ⚠️ Pode ou não precisar de Terminal — depende se essa pasta é acessível pelo meu sandbox. Vou tentar gravar; se falhar, te dou o comando bash pronto.
+> Pode usar essa pasta? Responda:
+>   - **'sim'** (uso a sugestão)
+>   - **cole outro caminho** se preferir uma pasta diferente
 >
-> ---
->
-> **Sua escolha?** Responda **'1'** (iCloud), **'2'** (Documents local) ou **cole o caminho** (Opção 3).
->
-> Importante: NÃO há resposta certa universal — depende da realidade do seu escritório, sua tolerância a sync, e se você se sente confortável abrindo o Terminal uma vez. Tome a decisão que faz sentido pra você."
+> ⚠️ Se você não tem iCloud configurado neste Mac, ou prefere usar Dropbox/Drive/outra pasta de nuvem que você já tem ativa, cole o caminho dessa pasta."
 
-### Aguarde resposta literal
+**No Windows:**
 
-- Se responder **"1"**: use `$HOME/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/triagem-pro/`. Crie a pasta se não existir. **Não precisa Terminal — você grava direto.**
-- Se responder **"2"**: use `$HOME/Documents/triagem-pro/`. Prepare comandos bash pra compradora colar no Terminal (mkdir + cp dos templates + chmod). **Avise que serão 30 segundos no Terminal.**
-- Se colar **path**: use literal (expanda `~`). Tente gravar direto via sandbox. Se falhar, fallback pra Terminal igual Opção 2.
-- Se responder **vago** ("tanto faz", "pode salvar", "qualquer uma"): **re-pergunte com as opções claras.** Não decida sozinho.
+> "Antes de começar, preciso saber onde gravar seus arquivos de configuração.
+>
+> Pra não precisar abrir nenhum programa, sugiro usar a pasta do OneDrive que o Cowork já está habilitado:
+>
+> 📁 **`%USERPROFILE%\OneDrive\Cowork OS\Triagem Pro\`**
+>
+> Os arquivos sincronizam na sua conta Microsoft — disponíveis em qualquer PC/celular logado.
+>
+> Pode usar essa pasta? Responda:
+>   - **'sim'** (uso a sugestão)
+>   - **cole outro caminho** se preferir
+>
+> ⚠️ Se não tem OneDrive ativo, cole o caminho de outra pasta de sync (Dropbox, Drive) que você já usa."
 
-### O que NÃO fazer aqui
+### Aguarde resposta
 
-- **NÃO** sugira "computer-use", "Terminal automation", "Finder/Explorer integration", "code interpreter" ou qualquer tool Anthropic preview que possa não existir no ambiente da compradora.
-- **NÃO** decida sozinho qual path usar — pergunte.
-- **NÃO** invente paths a partir do contexto da plataforma (sidebar do Cowork, CLAUDE.md externo, nomes de pasta que você "viu por aí").
+- **"sim"** ou variantes ("pode", "ok", "vai", "pode usar", "essa serve"): use o path sugerido. **Crie a pasta** se não existir. Não precisa Terminal.
+- **Path colado**: use literal (expanda `~` pra `$HOME`). Tente gravar direto via sandbox.
+- **Resposta vaga** ("tanto faz", "qualquer um"): use o path sugerido como default e avise: "Vou usar a pasta padrão sugerida acima. Se quiser mudar depois, é só rodar /configurar de novo." Não trave o fluxo aqui.
+- **"não quero iCloud/OneDrive"** ou similar: explique transparente: "Sem uma pasta de sync (iCloud/OneDrive) ou caminho específico que você me passe, eu não consigo gravar — preciso de uma pasta que meu sandbox acesse. Você pode me passar o caminho de outra pasta sua (Dropbox/Drive)? Ou aceitar iCloud/OneDrive como compromisso?" Re-pergunte uma vez. Se ela ainda recusar, ofereça cancelar setup respeitosamente.
 
 ### Após a compradora confirmar o path
 
-Salve a variável interna `CONFIG_DIR` com o path resolvido (ex.: `/Users/maria/Documents/triagem-pro/`). Use **esse path** em todas as Etapas seguintes — sempre que este SKILL.md disser `skills/whatsapp/config.env` ou similar, **substitua mentalmente por `$CONFIG_DIR/config.env`**. Crie o diretório se não existir.
+Salve a variável interna `CONFIG_DIR` com o path resolvido (ex.: `/Users/maria/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/Triagem Pro/`).
+
+**IMPORTANTE — propagação de `CONFIG_DIR`:** o script Python `whatsapp.py` faz **descoberta automática** do CONFIG_DIR via:
+1. Variável de ambiente `TRIAGEM_CONFIG_DIR` (se setada — override avançado)
+2. Path padrão iCloud `~/Library/Mobile Documents/com~apple~CloudDocs/Cowork OS/Triagem Pro/`
+3. Path padrão OneDrive `~/OneDrive/Cowork OS/Triagem Pro/`
+4. Retrocompat: `~/Documents/triagem-pro/`, `~/Library/.../Cowork OS/skills/whatsapp/`, ou SKILL_DIR
+
+Isso significa: **se você gravar `config.env` em um dos paths default acima, o `whatsapp.py` acha sozinho** — sem precisar exportar env var. Se a compradora colou path customizado (Opção C), você DEVE exportar env var em todos os bash que chamam `whatsapp.py`:
+
+```bash
+export TRIAGEM_CONFIG_DIR="$CONFIG_DIR" && python3 skills/whatsapp/scripts/whatsapp.py status
+```
 
 ### Confirmação visual da gravação
 
@@ -127,37 +146,43 @@ Após gravar cada arquivo na pasta da compradora, exiba:
 
 > "✅ Gravei [config.env / config.json / voz.md] em `[path completo]`."
 
+### O que NÃO fazer aqui
+
+- **NÃO** sugira "computer-use", Terminal automation, Finder/Explorer integration, code interpreter ou qualquer tool Anthropic preview/labs.
+- **NÃO** decida sozinho qual path usar quando ela não responder claramente — use a sugestão default e avise (não pergunte de novo se já é vago).
+- **NÃO** invente paths a partir do contexto da plataforma (sidebar do Cowork, CLAUDE.md externo, nomes de pasta que você "viu por aí").
+
 ---
 
 ## Rotina de Retomada (executar SEMPRE no início)
 
 **Pré-condição:** você já passou pela Etapa Preliminar acima e tem `CONFIG_DIR` definido. Se ainda não tem, volte e pergunte primeiro.
 
-A Rotina de Retomada agora verifica os arquivos **no `CONFIG_DIR` da compradora** (não no diretório do plugin):
-
-Antes de começar qualquer etapa, verifique o que já existe:
+A Rotina de Retomada verifica os arquivos **no `CONFIG_DIR` da compradora**:
 
 ```bash
-ls skills/whatsapp/config.env 2>/dev/null && echo "CONFIG_ENV_OK" || echo "CONFIG_ENV_AUSENTE"
-ls skills/whatsapp/config.json 2>/dev/null && echo "CONFIG_JSON_OK" || echo "CONFIG_JSON_AUSENTE"
-ls skills/whatsapp/voz.md 2>/dev/null && echo "VOZ_OK" || echo "VOZ_AUSENTE"
+ls "$CONFIG_DIR/config.env" 2>/dev/null && echo "CONFIG_ENV_OK" || echo "CONFIG_ENV_AUSENTE"
+ls "$CONFIG_DIR/config.json" 2>/dev/null && echo "CONFIG_JSON_OK" || echo "CONFIG_JSON_AUSENTE"
+ls "$CONFIG_DIR/voz.md" 2>/dev/null && echo "VOZ_OK" || echo "VOZ_AUSENTE"
 ```
 
-Se ambos existirem, verifique se o `config.json` é válido e tem conteúdo mínimo:
+Se ambos existirem, valide o `config.json`:
 
 ```bash
-python3 -c "import json; d=json.load(open('skills/whatsapp/config.json')); assert d.get('firm',{}).get('name')" 2>/dev/null && echo "CONFIG_JSON_VALIDO" || echo "CONFIG_JSON_INVALIDO"
+python3 -c "import json; d=json.load(open('$CONFIG_DIR/config.json')); assert d.get('firm',{}).get('name')" 2>/dev/null && echo "CONFIG_JSON_VALIDO" || echo "CONFIG_JSON_INVALIDO"
 ```
 
 **Interprete o resultado e decida o ponto de entrada:**
 
 | Situação | O que fazer |
 |---|---|
-| Ambos existem **e** JSON válido **e** `skills/whatsapp/voz.md` existe (`VOZ_OK`) | Diga: "Parece que o agente já está totalmente configurado! Quer reconfigurar tudo do zero, atualizar só o perfil de voz, ou ajustar algum ponto específico?" Espere a resposta antes de continuar. |
-| Ambos existem **e** JSON válido **mas** `skills/whatsapp/voz.md` NÃO existe (`VOZ_AUSENTE`) | Retome da **Etapa 3** (aprender a voz). Informe: "Encontrei toda a configuração do escritório, mas falta aprender sua voz. Vamos fazer isso agora." |
-| Ambos existem mas o JSON é inválido ou vazio (`CONFIG_JSON_INVALIDO`) | Trate como configuração incompleta. Informe: "Encontrei os arquivos de configuração, mas o arquivo do escritório está incompleto ou corrompido. Vamos reconfigurar as informações do escritório." Retome da **Etapa 2**. |
-| Só o `config.env` existe | Retome da **Etapa 2** (configuração do escritório). Informe: "Encontrei a conexão com o WhatsApp já feita. Vamos continuar com as informações do seu escritório." |
+| Ambos existem **e** JSON válido **e** `voz.md` existe (`VOZ_OK`) | Diga: "Parece que o agente já está totalmente configurado! Quer reconfigurar tudo do zero, atualizar só o perfil de voz, ou ajustar algum ponto específico?" Espere a resposta antes de continuar. |
+| Ambos existem **e** JSON válido **mas** `voz.md` NÃO existe (`VOZ_AUSENTE`) | Retome da **Etapa 3** (aprender a voz). |
+| Ambos existem mas o JSON é inválido (`CONFIG_JSON_INVALIDO`) | Trate como incompleto. Retome da **Etapa 2**. |
+| Só o `config.env` existe | Retome da **Etapa 2**. |
 | Nenhum existe | Comece da **Etapa 0** (preparar o ambiente). |
+
+**Bonus — Migration automática de versões antigas:** antes de tratar como "primeira instalação", o `whatsapp.py` já faz **multi-path discovery** e encontra config legado em paths antigos (`~/Documents/triagem-pro/` da v0.2.x, `Cowork OS/skills/whatsapp/` da v0.1.0). Se a compradora tinha config em path antigo, oferte: "Encontrei sua config em [path antigo]. Quer migrar pra [novo CONFIG_DIR] ou manter onde está?"
 
 ---
 
@@ -173,7 +198,13 @@ python3 --version
 - Se o comando devolver algo como `Python 3.10.5` → ✅ Tudo certo. Diga à compradora que o ambiente está pronto e siga para a **Etapa 1**.
 - Se o comando falhar com erro `command not found` ou similar → explique com calma:
 
-> "Para rodar o agente, precisamos do Python instalado no seu computador — é gratuito e leva menos de 5 minutos. Acesse **python.org/downloads**, baixe a versão mais recente e instale normalmente. **Atenção importante para Windows:** durante a instalação, na primeira tela aparece um checkbox chamado 'Add Python to PATH' — ele vem **desmarcado** por padrão. Você precisa marcar esse checkbox antes de clicar em Install, senão o Python não será reconhecido nos passos seguintes. Depois de instalar, feche e reabra o terminal e me avise."
+> "O Cowork vai te pedir permissão pra instalar o Python necessário automaticamente. Quando aparecer um modal de aprovação, confirma. Em ~30 segundos ele instala e seguimos. Se por algum motivo o modal não aparecer ou der erro, me avisa que eu te oriento a instalar manualmente via python.org."
+
+**Após a compradora aprovar a instalação (modal do Cowork):**
+- Aguarde 30-60 segundos pra completar
+- Rode `python3 --version` de novo pra validar
+- Se aparecer versão → siga pra Etapa 1
+- Se ainda falhar → fallback manual: oriente a baixar Python em python.org/downloads. No Windows: marcar checkbox "Add Python to PATH" durante install. Depois reiniciar a sessão Cowork.
 
 Não avance para a Etapa 1 antes de o Python funcionar.
 
@@ -197,24 +228,34 @@ A Zappfy é o serviço que conecta o seu WhatsApp ao agente, de forma segura. Pe
 
 **Quando a compradora colar o token:**
 
-1. Verifique se o arquivo de exemplo existe:
+1. Crie o diretório `CONFIG_DIR` (da Etapa Preliminar) se não existir:
 ```bash
-ls skills/whatsapp/config.env.example 2>/dev/null && echo "EXAMPLE_OK" || echo "EXAMPLE_AUSENTE"
+mkdir -p "$CONFIG_DIR"
 ```
 
-2. **Se o exemplo existir (`EXAMPLE_OK`):** leia o conteúdo dele com a ferramenta Read (`skills/whatsapp/config.env.example`), use-o como base e substitua **apenas** o valor de `ZAPPFY_TOKEN` pelo token colado — preservando todas as demais linhas (ex.: `ZAPPFY_BASE_URL` e quaisquer outras). Grave em `skills/whatsapp/config.env` com a ferramenta Write.
+2. Grave `$CONFIG_DIR/config.env` (use a ferramenta Write — NÃO heredoc no bash, pois o token contém caracteres que podem quebrar shell escaping):
 
-3. **Se o exemplo não existir (`EXAMPLE_AUSENTE`):** crie `skills/whatsapp/config.env` com as linhas mínimas:
+Conteúdo do arquivo:
 ```
 ZAPPFY_TOKEN=<token colado pela compradora>
 ZAPPFY_BASE_URL=https://zappfy-v2.uazapi.com
 ```
 
+3. Ajuste permissão restritiva (só dona lê):
+```bash
+chmod 600 "$CONFIG_DIR/config.env"
+```
+
 4. **Não exiba o token de volta no chat depois de gravado.**
 
-4. Teste a conexão:
+5. Teste a conexão — o `whatsapp.py` faz **multi-path discovery automática** do CONFIG_DIR e acha o config.env onde você gravou:
 ```bash
 python3 skills/whatsapp/scripts/whatsapp.py status
+```
+
+**Se você gravou em path customizado** (Opção C da Etapa Preliminar, fora dos paths default), prefixe com env var:
+```bash
+TRIAGEM_CONFIG_DIR="$CONFIG_DIR" python3 skills/whatsapp/scripts/whatsapp.py status
 ```
 
 **Interprete a resposta:**
@@ -311,7 +352,7 @@ Mostre os defaults e pergunte:
 
 ### Escrever o config.json
 
-Com todas as respostas coletadas, escreva `skills/whatsapp/config.json` seguindo **exatamente** este esqueleto, preenchendo com os dados reais:
+Com todas as respostas coletadas, escreva `$CONFIG_DIR/config.json` seguindo **exatamente** este esqueleto, preenchendo com os dados reais:
 
 ```json
 {
@@ -333,10 +374,12 @@ Com todas as respostas coletadas, escreva `skills/whatsapp/config.json` seguindo
 
 **Atenção estrutural:** `team`, `internal_groups`, `client_group_prefixes`, `triagem`, `urgent_keywords` e `silence_keywords` ficam no **nível raiz** do JSON — **não** dentro de `firm`. Só `name` e `owner_contact_names` ficam dentro de `firm`.
 
+**Onde gravar:** use o `CONFIG_DIR` definido na Etapa Preliminar. Path final: `$CONFIG_DIR/config.json`. Use a ferramenta Write (não heredoc — JSON com aspas/acentos pode quebrar shell).
+
 Após gravar o arquivo, valide imediatamente que é um JSON sintático válido:
 
 ```bash
-python3 -c "import json; json.load(open('skills/whatsapp/config.json'))" 2>/dev/null && echo "JSON_OK" || echo "JSON_INVALIDO"
+python3 -c "import json; json.load(open('$CONFIG_DIR/config.json'))" 2>/dev/null && echo "JSON_OK" || echo "JSON_INVALIDO"
 ```
 
 Se retornar `JSON_INVALIDO`, corrija o arquivo antes de continuar.
@@ -365,7 +408,7 @@ Diga à compradora:
 
 > "Vou ler suas últimas mensagens enviadas para entender seu jeito de escrever — saudação, tom, vocabulário. Em 1 minuto eu trago um resumo pra você confirmar."
 
-Execute o protocolo completo da skill `voz` (ela cuida de tudo: puxar amostra, validar tamanho mínimo, analisar padrão, gravar `skills/whatsapp/voz.md`).
+Execute o protocolo completo da skill `voz` (ela cuida de tudo: puxar amostra, validar tamanho mínimo, analisar padrão, gravar `$CONFIG_DIR/voz.md`).
 
 **Pré-checagem antes de invocar:** verificar se `firm.owner_contact_names` está populado no `config.json` — sem isso a skill não consegue identificar quais mensagens são da compradora. Se ausente, voltar à Pergunta 2 da Etapa 2.
 

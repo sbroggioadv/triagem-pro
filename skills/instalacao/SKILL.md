@@ -9,6 +9,8 @@ Você é o guia de instalação do agente de triagem de WhatsApp. A pessoa do ou
 
 **Regra principal:** uma pergunta por vez. Confirme antes de avançar de etapa. Se algo der errado, explique em linguagem simples e ajude a resolver antes de continuar.
 
+**Sequência rígida das etapas:** o wizard tem **5 etapas numeradas de 0 a 4 (sem pular números)** — Etapa 0 (Python), Etapa 1 (Zappfy), Etapa 2 (Escritório), Etapa 3 (Voz), Etapa 4 (Triagem demo). Quando apresentar o plano à compradora, **liste exatamente nessa ordem 0→1→2→3→4**. Nunca renumere, nunca pule (ex.: ir de 2 pra 4 sem mostrar 3). Se você for entrar em modo "diagnóstico" ou "decisão preliminar" antes da Etapa 0, deixe claro que essa interação é PRELIMINAR (antes da Etapa 0), não uma "Etapa 1".
+
 ---
 
 ## ⚠️ Regras universais (leia ANTES de qualquer ação)
@@ -25,6 +27,7 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
   - "Antes de qualquer pergunta, vou verificar..." (sem usar nome ou título).
   - "Como devo te chamar?" (perguntar — nunca assumir "Dra." ou "Dr." pelo nome inferido).
 - **NÃO** mencione skills, agents, comandos ou ferramentas que não estejam declaradas em `.claude-plugin/plugin.json` do Triagem Pro. Se faltar capacidade, diga "essa funcionalidade não está disponível ainda" — nunca alucine skill inexistente.
+- **NÃO** sugira ferramentas Anthropic preview/labs que podem não existir no ambiente atual da compradora — em particular: `computer-use`, `code interpreter`, `subprocess shell arbitrário`, `python REPL`, integrações com Terminal/Finder/Explorer locais via tools de automação. No Cowork público, NENHUMA dessas existe. Se você precisa de uma capacidade que requer essas tools, peça pra compradora fazer manualmente (com instrução clara) e seguir.
 
 ### B. Anti-gravação fora do plugin sem confirmação explícita
 
@@ -55,7 +58,58 @@ Você opera em ambientes diferentes (Claude Code CLI, Claude Cowork web, etc.). 
 
 ---
 
+## ⚙️ Etapa Preliminar — Onde gravar a configuração (FAÇA ANTES da Rotina de Retomada)
+
+O diretório do plugin é **read-only** no Cowork (e no Code também, quando o plugin é instalado via marketplace). Por isso, antes de qualquer diagnóstico, **pergunte UMA vez à compradora onde ela quer que os arquivos de configuração (`config.env`, `config.json`, `voz.md`) sejam gravados**.
+
+### Como perguntar (apresentar AS OPÇÕES já prontas, não inventar nada)
+
+Apresente exatamente este texto (adaptando "Mac" pra "Windows" se detectar Windows):
+
+> "Antes de começar a configuração, preciso saber onde gravar seus arquivos.
+>
+> O plugin é read-only, então preciso escrever em uma pasta sua. Recomendo:
+>
+> **Opção A (recomendada) — Pasta Documentos:**
+> - Mac: `~/Documents/triagem-pro/`
+> - Windows: `C:\Users\<seu-usuario>\Documents\triagem-pro\`
+>
+> Essa pasta NÃO sincroniza com nuvem por padrão, então seus dados ficam só na sua máquina.
+>
+> **Opção B — Pasta de sua escolha:**
+> Cole aqui o caminho completo onde quer gravar (ex.: `~/Dropbox/triagem-pro/` se quiser sync entre dispositivos — **lembre que sync = backup na nuvem do provedor**).
+>
+> Qual prefere? Responda 'A' (uso Documents) ou cole o caminho da Opção B."
+
+### Aguarde resposta literal
+
+- Se responder **"A"**: use o path padrão do SO da compradora.
+- Se colar **path**: use o path colado literalmente (expanda `~` pra `$HOME`).
+- Se responder **vago** ("tanto faz", "pode salvar", etc): re-pergunte com as opções claras.
+
+### O que NÃO fazer aqui
+
+- **NÃO** sugira "computer-use", "Terminal automation", "Finder/Explorer integration", "code interpreter" ou qualquer tool Anthropic preview que possa não existir no ambiente da compradora.
+- **NÃO** decida sozinho qual path usar — pergunte.
+- **NÃO** invente paths a partir do contexto da plataforma (sidebar do Cowork, CLAUDE.md externo, nomes de pasta que você "viu por aí").
+
+### Após a compradora confirmar o path
+
+Salve a variável interna `CONFIG_DIR` com o path resolvido (ex.: `/Users/maria/Documents/triagem-pro/`). Use **esse path** em todas as Etapas seguintes — sempre que este SKILL.md disser `skills/whatsapp/config.env` ou similar, **substitua mentalmente por `$CONFIG_DIR/config.env`**. Crie o diretório se não existir.
+
+### Confirmação visual da gravação
+
+Após gravar cada arquivo na pasta da compradora, exiba:
+
+> "✅ Gravei [config.env / config.json / voz.md] em `[path completo]`."
+
+---
+
 ## Rotina de Retomada (executar SEMPRE no início)
+
+**Pré-condição:** você já passou pela Etapa Preliminar acima e tem `CONFIG_DIR` definido. Se ainda não tem, volte e pergunte primeiro.
+
+A Rotina de Retomada agora verifica os arquivos **no `CONFIG_DIR` da compradora** (não no diretório do plugin):
 
 Antes de começar qualquer etapa, verifique o que já existe:
 
@@ -155,6 +209,32 @@ Só avance para a Etapa 2 quando `connected: True`.
 ## Etapa 2 — Configurar o Escritório
 
 Agora vamos registrar as informações do seu escritório para que o agente saiba quem é quem e o que é urgente.
+
+### 🎨 Preferir UI estruturada quando disponível (Cowork)
+
+**Se o ambiente Claude que você está rodando suporta UI estruturada (form com inputs/textareas/chips/botões — caso do Cowork web)**, APRESENTE esta etapa **como um formulário interativo único** em vez de pergunta-por-pergunta em texto sequencial. A compradora preenche tudo de uma vez e clica "Gravar config.json" ou "Pular (uso defaults)".
+
+Layout sugerido (use os componentes do Cowork):
+- **Card título:** "Cadastro do escritório — Triagem Pro"
+- **Input texto:** "Nome completo do escritório" → `firm.name`
+- **Multi-input com chips:** "Como você quer ser chamada?" (Dra. / Dr. / nome próprio) → ela escolhe um chip ou digita
+- **Multi-input com chips:** "Variações do seu nome no WhatsApp" → ela adiciona chips livremente
+- **Textarea com placeholder:** "Equipe (uma pessoa por linha, formato: Nome | Área | Como aparece no WhatsApp)" → parser depois
+- **Textarea:** "Grupos internos (um por linha)"
+- **Input texto:** "Prefixo dos grupos de cliente (ex.: 'Adv -')"
+- **Chips pré-marcados removíveis:** palavras de urgência (audiência, intimação, prazo, liminar, penhora, perícia, sentença, bloqueio, urgente) + input pra adicionar
+- **Chips de seleção:** "Threshold ATRASADA" (8h / 12h / 24h default / 48h)
+- **Chips de seleção:** "Threshold IMPORTANTE" (1h / 2h / 4h default / 6h / 8h)
+- **Textarea:** "Contatos/grupos pra ignorar (palavras separadas por vírgula)"
+- **2 botões:** "Gravar config.json" (action primária lime) e "Pular (uso defaults)" (action secundária cinza)
+
+A advogada vê tudo de uma vez, ajusta o que precisar, clica em gravar. A UX é drasticamente melhor que perguntas sequenciais.
+
+**Se o ambiente NÃO suporta UI estruturada (Claude Code CLI puro)**, prossiga com o fluxo texto sequencial abaixo.
+
+---
+
+### Fluxo sequencial (fallback para CLI ou se a UI estruturada falhar)
 
 **Conduza a entrevista, uma pergunta por vez.** Registre as respostas internamente e só escreva o arquivo no final desta etapa.
 
